@@ -9,6 +9,32 @@ Program for building and installing other python programs.
 """
 
 
+def validate(project_root, executable):
+    """
+    Checks if folder is valid python project
+    :param executable: name of the main project file
+    :param project_root: path to project dir
+    :return: true if specified folder has at least  one .py file or file named as root
+    """
+    print("Checking if {} is valid project root".format(project_root))
+    for name in os.listdir(project_root):
+        full_name = os.path.join(project_root, name)
+        if is_python_file(full_name, executable):
+            return True
+    print("Project root {} is not valid python project".format(project_root))
+    return False
+
+
+def remove_old_exe(exe_dir):
+    """
+    Removes specified dir
+    :param exe_dir: dir to remove
+    """
+    if os.path.exists(exe_dir):
+        print("Removing {}".format(exe_dir))
+        shutil.rmtree(exe_dir)
+
+
 def make_executable(filename):
     """
     Make file executable, something like chmod +x
@@ -82,11 +108,13 @@ def install(project_name, project_root, exe_root, executable):
     :param exe_root: executable files root folder
     :param executable: main file in project
     """
-    print("Installing {} from {} to {}".format(project_name, project_root, exe_root))
-    copy_files(project_root, exe_root, executable)
-    make_executable(executable)
-    append_to_bashrc(project_name, exe_root)
-    cleanup(exe_root)
+    if validate(project_root, executable):
+        remove_old_exe(exe_root)
+        print("Installing {} from {} to {}".format(project_name, project_root, exe_root))
+        copy_files(project_root, exe_root, executable)
+        make_executable(executable)
+        append_to_bashrc(project_name, exe_root)
+        cleanup(exe_root)
 
 
 def cleanup(exe_root):
@@ -121,9 +149,6 @@ def main():
     project_name = os.path.basename(project)
     executable = os.path.join(project, project_name)
     exe_dir = os.path.expanduser("~/." + project_name + "-exe")
-    if os.path.exists(exe_dir):
-        print("Removing {}".format(exe_dir))
-        shutil.rmtree(exe_dir)
     parser.add_argument("project", nargs="*", default=project, help="path to the root of project files (source "
                                                                     "files), default is current folder")
     parser.add_argument("executable", nargs="*", default=executable, help="path to main executable file, default is "
